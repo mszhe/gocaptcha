@@ -14,7 +14,6 @@ const (
 )
 
 func main() {
-
 	err := gocaptcha.ReadFonts("fonts", ".ttf")
 	if err != nil {
 		fmt.Println(err)
@@ -49,6 +48,7 @@ func Index(w http.ResponseWriter, r *http.Request) {
 	}
 	t.Execute(w, nil)
 }
+
 func Get(w http.ResponseWriter, r *http.Request) {
 
 	captchaImage, err := gocaptcha.NewCaptchaImage(dx, dy, gocaptcha.RandLightColor())

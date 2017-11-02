@@ -24,20 +24,20 @@ import (
 )
 
 var (
-	dpi                 = flag.Float64("dpi", 72, "screen resolution in Dots Per Inch")
-	r                   = rand.New(rand.NewSource(time.Now().UnixNano()))
-	FontFamily []string = make([]string, 0)
+	dpi        = flag.Float64("dpi", 72, "screen resolution in Dots Per Inch")
+	r          = rand.New(rand.NewSource(time.Now().UnixNano()))
+	FontFamily = make([]string, 0)
 )
 
-const txtChars = "AaCcDdEeFfGgHhJjKkLMmNnPpQqRrSsTtUuVvWwXxYtZ012346789"
+const txtChars = "AaCcDdEeFfGgHhJKkMmNnPpQqRrSsTtUuVvWwXxYt34678"
 
 const (
 	//图片格式
-	ImageFormatPng = iota
+	ImageFormatPng  = iota
 	ImageFormatJpeg
 	ImageFormatGif
 	//验证码噪点强度
-	CaptchaComplexLower = iota
+	CaptchaComplexLower  = iota
 	CaptchaComplexMedium
 	CaptchaComplexHigh
 )
@@ -85,25 +85,25 @@ func NewCaptchaImage(width int, height int, bgColor color.RGBA) (*CaptchaImage, 
 }
 
 //保存图片对象
-func (this *CaptchaImage) SaveImage(w io.Writer, imageFormat int) error {
+func (ci *CaptchaImage) SaveImage(w io.Writer, imageFormat int) error {
 
 	if imageFormat == ImageFormatPng {
-		return png.Encode(w, this.nrgba)
+		return png.Encode(w, ci.nrgba)
 	}
 	if imageFormat == ImageFormatJpeg {
-		return jpeg.Encode(w, this.nrgba, &jpeg.Options{100})
+		return jpeg.Encode(w, ci.nrgba, &jpeg.Options{Quality: 100})
 	}
 	if imageFormat == ImageFormatGif {
-		return gif.Encode(w, this.nrgba, &gif.Options{NumColors: 256})
+		return gif.Encode(w, ci.nrgba, &gif.Options{NumColors: 256})
 	}
 
-	return errors.New("Not supported image format")
+	return errors.New("Not supported image format ")
 }
 
 //添加一个较粗的空白直线
-func (captcha *CaptchaImage) DrawHollowLine() *CaptchaImage {
+func (ci *CaptchaImage) DrawHollowLine() *CaptchaImage {
 
-	first := (captcha.width / 20)
+	first := ci.width / 20
 	end := first * 19
 
 	lineColor := color.RGBA{R: 245, G: 250, B: 251, A: 255}
@@ -118,74 +118,74 @@ func (captcha *CaptchaImage) DrawHollowLine() *CaptchaImage {
 		multiple = multiple * -1.0
 	}
 
-	w := captcha.height / 20
+	w := ci.height / 20
 
 	for ; x1 < x2; x1++ {
 
-		y := math.Sin(x1*math.Pi*multiple/float64(captcha.width)) * float64(captcha.height/3)
+		y := math.Sin(x1*math.Pi*multiple/float64(ci.width)) * float64(ci.height/3)
 
 		if multiple < 0 {
-			y = y + float64(captcha.height/2)
+			y = y + float64(ci.height/2)
 		}
-		captcha.nrgba.Set(int(x1), int(y), lineColor)
+		ci.nrgba.Set(int(x1), int(y), lineColor)
 
 		for i := 0; i <= w; i++ {
-			captcha.nrgba.Set(int(x1), int(y)+i, lineColor)
+			ci.nrgba.Set(int(x1), int(y)+i, lineColor)
 		}
 	}
 
-	return captcha
+	return ci
 }
 
-func (captcha *CaptchaImage) DrawSineLine() *CaptchaImage {
+func (ci *CaptchaImage) DrawSineLine() *CaptchaImage {
 	px := 0
 	var py float64 = 0
 
 	//振幅
-	a := r.Intn(captcha.height/2)
+	a := r.Intn(ci.height / 2)
 
 	//Y轴方向偏移量
-	b := Random(int64(-captcha.height/4),int64(captcha.height/4))
+	b := Random(int64(-ci.height/4), int64(ci.height/4))
 
 	//X轴方向偏移量
-	f := Random(int64(-captcha.height/4),int64(captcha.height/4))
+	f := Random(int64(-ci.height/4), int64(ci.height/4))
 	// 周期
 	var t float64 = 0
-	if(captcha.height > captcha.width/2){
-		t = Random(int64(captcha.width/2),int64(captcha.height))
-	}else{
-		t = Random(int64(captcha.height),int64(captcha.width/2))
+	if ci.height > ci.width/2 {
+		t = Random(int64(ci.width/2), int64(ci.height))
+	} else {
+		t = Random(int64(ci.height), int64(ci.width/2))
 	}
 	w := float64((2 * math.Pi) / t)
 
 	// 曲线横坐标起始位置
 	px1 := 0
-	px2 := int(Random(int64(float64(captcha.width) * 0.8),int64(captcha.width)))
+	px2 := int(Random(int64(float64(ci.width)*0.8), int64(ci.width)))
 
 	c := color.RGBA{R: uint8(r.Intn(150)), G: uint8(r.Intn(150)), B: uint8(r.Intn(150)), A: uint8(255)}
 
-	for px = px1;px < px2;px ++ {
-		if(w != 0){
-			py = float64(a) * math.Sin(w * float64(px) + f) + b + (float64(captcha.width) / float64(5))
-			i := captcha.height / 5
+	for px = px1; px < px2; px ++ {
+		if w != 0 {
+			py = float64(a)*math.Sin(w*float64(px)+f) + b + (float64(ci.width) / float64(5))
+			i := ci.height / 5
 			for i > 0 {
-				captcha.nrgba.Set(px + i,int(py),c)
+				ci.nrgba.Set(px+i, int(py), c)
 				//fmt.Println(px + i,int(py) )
 				i --
 			}
 		}
 	}
 
-	return captcha
+	return ci
 }
 
 //画一条直线
-func (captcha *CaptchaImage) Drawline(num int) *CaptchaImage {
+func (ci *CaptchaImage) Drawline(num int) *CaptchaImage {
 
-	first := (captcha.width / 10)
+	first := ci.width / 10
 	end := first * 9
 
-	y := captcha.height / 3
+	y := ci.height / 3
 
 	for i := 0; i < num; i++ {
 
@@ -200,13 +200,13 @@ func (captcha *CaptchaImage) Drawline(num int) *CaptchaImage {
 			point2.Y = r.Intn(y) + y*2
 		}
 
-		captcha.drawBeeline(point1, point2, RandDeepColor())
+		ci.drawBeeline(point1, point2, RandDeepColor())
 
 	}
-	return captcha
+	return ci
 }
 
-func (captcha *CaptchaImage) drawBeeline(point1 Point, point2 Point, lineColor color.RGBA) {
+func (ci *CaptchaImage) drawBeeline(point1 Point, point2 Point, lineColor color.RGBA) {
 	dx := math.Abs(float64(point1.X - point2.X))
 
 	dy := math.Abs(float64(point2.Y - point1.Y))
@@ -219,11 +219,11 @@ func (captcha *CaptchaImage) drawBeeline(point1 Point, point2 Point, lineColor c
 	}
 	err := dx - dy
 	for {
-		captcha.nrgba.Set(point1.X, point1.Y, lineColor)
-		captcha.nrgba.Set(point1.X+1, point1.Y, lineColor)
-		captcha.nrgba.Set(point1.X-1, point1.Y, lineColor)
-		captcha.nrgba.Set(point1.X+2, point1.Y, lineColor)
-		captcha.nrgba.Set(point1.X-2, point1.Y, lineColor)
+		ci.nrgba.Set(point1.X, point1.Y, lineColor)
+		ci.nrgba.Set(point1.X+1, point1.Y, lineColor)
+		ci.nrgba.Set(point1.X-1, point1.Y, lineColor)
+		ci.nrgba.Set(point1.X+2, point1.Y, lineColor)
+		ci.nrgba.Set(point1.X-2, point1.Y, lineColor)
 		if point1.X == point2.X && point1.Y == point2.Y {
 			return
 		}
@@ -240,20 +240,20 @@ func (captcha *CaptchaImage) drawBeeline(point1 Point, point2 Point, lineColor c
 }
 
 //画边框.
-func (captcha *CaptchaImage) DrawBorder(borderColor color.RGBA) *CaptchaImage {
-	for x := 0; x < captcha.width; x++ {
-		captcha.nrgba.Set(x, 0, borderColor)
-		captcha.nrgba.Set(x, captcha.height-1, borderColor)
+func (ci *CaptchaImage) DrawBorder(borderColor color.RGBA) *CaptchaImage {
+	for x := 0; x < ci.width; x++ {
+		ci.nrgba.Set(x, 0, borderColor)
+		ci.nrgba.Set(x, ci.height-1, borderColor)
 	}
-	for y := 0; y < captcha.height; y++ {
-		captcha.nrgba.Set(0, y, borderColor)
-		captcha.nrgba.Set(captcha.width-1, y, borderColor)
+	for y := 0; y < ci.height; y++ {
+		ci.nrgba.Set(0, y, borderColor)
+		ci.nrgba.Set(ci.width-1, y, borderColor)
 	}
-	return captcha
+	return ci
 }
 
 //画噪点.
-func (captcha *CaptchaImage) DrawNoise(complex int) *CaptchaImage {
+func (ci *CaptchaImage) DrawNoise(complex int) *CaptchaImage {
 	density := 18
 	if complex == CaptchaComplexLower {
 		density = 28
@@ -262,24 +262,24 @@ func (captcha *CaptchaImage) DrawNoise(complex int) *CaptchaImage {
 	} else if complex == CaptchaComplexHigh {
 		density = 8
 	}
-	maxSize := (captcha.height * captcha.width) / density
+	maxSize := (ci.height * ci.width) / density
 
 	for i := 0; i < maxSize; i++ {
 
-		rw := r.Intn(captcha.width)
-		rh := r.Intn(captcha.height)
+		rw := r.Intn(ci.width)
+		rh := r.Intn(ci.height)
 
-		captcha.nrgba.Set(rw, rh, RandColor())
+		ci.nrgba.Set(rw, rh, RandColor())
 		size := r.Intn(maxSize)
 		if size%3 == 0 {
-			captcha.nrgba.Set(rw+1, rh+1, RandColor())
+			ci.nrgba.Set(rw+1, rh+1, RandColor())
 		}
 	}
-	return captcha
+	return ci
 }
 
 //画文字噪点.
-func (captcha *CaptchaImage) DrawTextNoise(complex int) error {
+func (ci *CaptchaImage) DrawTextNoise(complex int) error {
 	density := 1500
 	if complex == CaptchaComplexLower {
 		density = 2000
@@ -289,22 +289,22 @@ func (captcha *CaptchaImage) DrawTextNoise(complex int) error {
 		density = 1000
 	}
 
-	maxSize := (captcha.height * captcha.width) / density
+	maxSize := (ci.height * ci.width) / density
 
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 
 	c := freetype.NewContext()
 	c.SetDPI(*dpi)
 
-	c.SetClip(captcha.nrgba.Bounds())
-	c.SetDst(captcha.nrgba)
+	c.SetClip(ci.nrgba.Bounds())
+	c.SetDst(ci.nrgba)
 	c.SetHinting(font.HintingFull)
-	rawFontSize := float64(captcha.height) / (1 + float64(r.Intn(7))/float64(10))
+	rawFontSize := float64(ci.height) / (1 + float64(r.Intn(7))/float64(10))
 
 	for i := 0; i < maxSize; i++ {
 
-		rw := r.Intn(captcha.width)
-		rh := r.Intn(captcha.height)
+		rw := r.Intn(ci.width)
+		rh := r.Intn(ci.height)
 
 		text := RandText(1)
 		fontSize := rawFontSize/2 + float64(r.Intn(5))
@@ -330,19 +330,19 @@ func (captcha *CaptchaImage) DrawTextNoise(complex int) error {
 }
 
 //写字.
-func (captcha *CaptchaImage) DrawText(text string) error {
+func (ci *CaptchaImage) DrawText(text string) error {
 	c := freetype.NewContext()
 	c.SetDPI(*dpi)
 
-	c.SetClip(captcha.nrgba.Bounds())
-	c.SetDst(captcha.nrgba)
+	c.SetClip(ci.nrgba.Bounds())
+	c.SetDst(ci.nrgba)
 	c.SetHinting(font.HintingFull)
 
-	fontWidth := captcha.width / len(text)
+	fontWidth := ci.width / len(text)
 
 	for i, s := range text {
 
-		fontSize := float64(captcha.height) / (1 + float64(r.Intn(7))/float64(9))
+		fontSize := float64(ci.height) / (1 + float64(r.Intn(7))/float64(9))
 
 		c.SetSrc(image.NewUniform(RandDeepColor()))
 		c.SetFontSize(fontSize)
@@ -356,7 +356,7 @@ func (captcha *CaptchaImage) DrawText(text string) error {
 
 		x := int(fontWidth)*i + int(fontWidth)/int(fontSize)
 
-		y := 5 + r.Intn(captcha.height/2) + int(fontSize/2)
+		y := 5 + r.Intn(ci.height/2) + int(fontSize/2)
 
 		pt := freetype.Pt(x, y)
 
@@ -373,15 +373,25 @@ func (captcha *CaptchaImage) DrawText(text string) error {
 }
 
 //获取所及字体.
-func RandFontFamily() (*truetype.Font, error) {
-	fontfile := FontFamily[r.Intn(len(FontFamily))]
+//func RandFontFamily() (*truetype.Font, error) {
+//	fontfile := FontFamily[r.Intn(len(FontFamily))]
+//
+//	fontBytes, err := ioutil.ReadFile(fontfile)
+//	if err != nil {
+//		log.Println(err)
+//		return &truetype.Font{}, err
+//	}
+//	f, err := freetype.ParseFont(fontBytes)
+//	if err != nil {
+//		log.Println(err)
+//		return &truetype.Font{}, err
+//	}
+//	return f, nil
+//}
 
-	fontBytes, err := ioutil.ReadFile(fontfile)
-	if err != nil {
-		log.Println(err)
-		return &truetype.Font{}, err
-	}
-	f, err := freetype.ParseFont(fontBytes)
+//获取所及字体.
+func RandFontFamily() (*truetype.Font, error) {
+	f, err := freetype.ParseFont(FONTS[r.Intn(len(FONTS))])
 	if err != nil {
 		log.Println(err)
 		return &truetype.Font{}, err
@@ -453,7 +463,6 @@ func SetFontFamily(fontPath ...string) {
 //input int
 //output int red, green, blue.
 func ColorToRGB(colorVal int) color.RGBA {
-
 	red := colorVal >> 16
 	green := (colorVal & 0x00FF00) >> 8
 	blue := colorVal & 0x0000FF
